@@ -23,6 +23,8 @@
 use std::io::{self, IoSlice, IoSliceMut, Read, Write};
 #[cfg(unix)]
 use std::os::unix::io::{AsRawFd, IntoRawFd, RawFd};
+#[cfg(windows)]
+use std::os::windows::io::{AsRawHandle, IntoRawHandle, RawHandle};
 
 use mio::{event, Interest, Registry, Token};
 
@@ -88,6 +90,20 @@ impl IntoRawFd for Sender {
     }
 }
 
+#[cfg(windows)]
+impl AsRawHandle for Sender {
+    fn as_raw_handle(&self) -> RawHandle {
+        self.inner.as_raw_handle()
+    }
+}
+
+#[cfg(windows)]
+impl IntoRawHandle for Sender {
+    fn into_raw_handle(self) -> RawHandle {
+        self.inner.into_raw_handle()
+    }
+}
+
 /// Receiving end of an Unix pipe.
 ///
 /// See [`new_pipe`] for documentation, including examples.
@@ -141,6 +157,20 @@ impl AsRawFd for Receiver {
 impl IntoRawFd for Receiver {
     fn into_raw_fd(self) -> RawFd {
         self.inner.into_raw_fd()
+    }
+}
+
+#[cfg(windows)]
+impl AsRawHandle for Receiver {
+    fn as_raw_handle(&self) -> RawHandle {
+        self.inner.as_raw_handle()
+    }
+}
+
+#[cfg(windows)]
+impl IntoRawHandle for Receiver {
+    fn into_raw_handle(self) -> RawHandle {
+        self.inner.into_raw_handle()
     }
 }
 

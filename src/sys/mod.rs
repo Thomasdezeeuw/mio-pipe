@@ -6,4 +6,8 @@ mod unix;
 #[cfg(unix)]
 pub use unix::{new_pipe, Receiver, Sender};
 
-// TODO: add Windows implementation.
+#[cfg(windows)]
+mod windows;
+
+#[cfg(windows)]
+pub use windows::{new_pipe, Receiver, Sender};
