@@ -1,0 +1,21 @@
+[package]
+name          = "mio-pipe"
+description   = "Crate for using Unix pipes with Mio."
+version       = "0.1.0"
+authors       = ["Thomas de Zeeuw <thomasdezeeuw@gmail.com>"]
+license       = "MIT"
+documentation = "https://docs.rs/mio-pipe"
+repository    = "https://github.com/Thomasdezeeuw/mio-pipe"
+readme        = "README.md"
+keywords      = ["pipe", "mio"]
+include       = ["/Cargo.toml", "/src/**/*.rs", "/README.md", "/LICENSE"]
+edition       = "2018"
+
+[badges]
+travis-ci = { repository = "Thomasdezeeuw/mio-pipe", branch = "master" }
+
+[dependencies]
+mio  = { git = "https://github.com/tokio-rs/mio" }
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2.58"
