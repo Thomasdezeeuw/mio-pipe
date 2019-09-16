@@ -81,7 +81,7 @@ fn event_when_pipe_is_dropped() {
     let mut iter = events.iter();
     let event = iter.next().unwrap();
     assert!(event.is_writable());
-    assert!(event.is_hup());
+    assert!(event.is_error() || event.is_hup());
     assert!(iter.next().is_none());
 
     handle.join().unwrap();
