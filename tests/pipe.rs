@@ -4,7 +4,7 @@ use std::thread;
 use std::time::Duration;
 
 use mio::event::Event;
-use mio::{Events, Interests, Poll, Token};
+use mio::{Events, Interest, Poll, Token};
 
 use mio_pipe::new_pipe;
 
@@ -24,16 +24,16 @@ fn smoke() {
     assert_would_block(receiver.read(&mut buf));
 
     poll.registry()
-        .register(&mut receiver, RECEIVER, Interests::READABLE)
+        .register(&mut receiver, RECEIVER, Interest::READABLE)
         .unwrap();
     poll.registry()
-        .register(&mut sender, SENDER, Interests::WRITABLE)
+        .register(&mut sender, SENDER, Interest::WRITABLE)
         .unwrap();
 
     expect_events(
         &mut poll,
         &mut events,
-        vec![ExpectEvent::new(SENDER, Interests::WRITABLE)],
+        vec![ExpectEvent::new(SENDER, Interest::WRITABLE)],
     );
     let n = sender.write(DATA1).unwrap();
     assert_eq!(n, DATA1.len());
@@ -41,7 +41,7 @@ fn smoke() {
     expect_events(
         &mut poll,
         &mut events,
-        vec![ExpectEvent::new(RECEIVER, Interests::READABLE)],
+        vec![ExpectEvent::new(RECEIVER, Interest::READABLE)],
     );
     let n = receiver.read(&mut buf).unwrap();
     assert_eq!(n, DATA1.len());
@@ -55,7 +55,7 @@ fn event_when_pipe_is_dropped() {
 
     let (mut sender, receiver) = new_pipe().unwrap();
     poll.registry()
-        .register(&mut sender, SENDER, Interests::WRITABLE)
+        .register(&mut sender, SENDER, Interest::WRITABLE)
         .unwrap();
 
     let barrier = Arc::new(Barrier::new(2));
@@ -70,7 +70,7 @@ fn event_when_pipe_is_dropped() {
     expect_events(
         &mut poll,
         &mut events,
-        vec![ExpectEvent::new(SENDER, Interests::WRITABLE)],
+        vec![ExpectEvent::new(SENDER, Interest::WRITABLE)],
     );
 
     barrier.wait(); // Unblock the thread.
@@ -81,7 +81,7 @@ fn event_when_pipe_is_dropped() {
     let mut iter = events.iter();
     let event = iter.next().unwrap();
     assert!(event.is_writable());
-    assert!(event.is_error() || event.is_hup());
+    assert!(event.is_error() || event.is_write_closed());
     assert!(iter.next().is_none());
 
     handle.join().unwrap();
@@ -92,11 +92,11 @@ fn event_when_pipe_is_dropped() {
 #[derive(Debug)]
 pub struct ExpectEvent {
     token: Token,
-    interests: Interests,
+    interests: Interest,
 }
 
 impl ExpectEvent {
-    pub const fn new(token: Token, interests: Interests) -> ExpectEvent {
+    pub const fn new(token: Token, interests: Interest) -> ExpectEvent {
         ExpectEvent { token, interests }
     }
 

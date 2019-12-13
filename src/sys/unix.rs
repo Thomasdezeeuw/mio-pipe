@@ -3,7 +3,7 @@ use std::io::{self, IoSlice, IoSliceMut, Read, Write};
 use std::os::unix::io::{AsRawFd, FromRawFd, IntoRawFd, RawFd};
 
 use mio::unix::SourceFd;
-use mio::{event, Interests, Registry, Token};
+use mio::{event, Interest, Registry, Token};
 
 #[derive(Debug)]
 pub struct Sender {
@@ -11,20 +11,25 @@ pub struct Sender {
 }
 
 impl event::Source for Sender {
-    fn register(&self, registry: &Registry, token: Token, interests: Interests) -> io::Result<()> {
+    fn register(
+        &mut self,
+        registry: &Registry,
+        token: Token,
+        interests: Interest,
+    ) -> io::Result<()> {
         SourceFd(&self.inner.as_raw_fd()).register(registry, token, interests)
     }
 
     fn reregister(
-        &self,
+        &mut self,
         registry: &Registry,
         token: Token,
-        interests: Interests,
+        interests: Interest,
     ) -> io::Result<()> {
         SourceFd(&self.inner.as_raw_fd()).reregister(registry, token, interests)
     }
 
-    fn deregister(&self, registry: &Registry) -> io::Result<()> {
+    fn deregister(&mut self, registry: &Registry) -> io::Result<()> {
         SourceFd(&self.inner.as_raw_fd()).deregister(registry)
     }
 }
@@ -61,20 +66,25 @@ pub struct Receiver {
 }
 
 impl event::Source for Receiver {
-    fn register(&self, registry: &Registry, token: Token, interests: Interests) -> io::Result<()> {
+    fn register(
+        &mut self,
+        registry: &Registry,
+        token: Token,
+        interests: Interest,
+    ) -> io::Result<()> {
         SourceFd(&self.inner.as_raw_fd()).register(registry, token, interests)
     }
 
     fn reregister(
-        &self,
+        &mut self,
         registry: &Registry,
         token: Token,
-        interests: Interests,
+        interests: Interest,
     ) -> io::Result<()> {
         SourceFd(&self.inner.as_raw_fd()).reregister(registry, token, interests)
     }
 
-    fn deregister(&self, registry: &Registry) -> io::Result<()> {
+    fn deregister(&mut self, registry: &Registry) -> io::Result<()> {
         SourceFd(&self.inner.as_raw_fd()).deregister(registry)
     }
 }
