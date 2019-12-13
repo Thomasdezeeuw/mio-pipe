@@ -6,7 +6,7 @@ use std::io::{self, IoSlice, IoSliceMut, Read, Write};
 #[cfg(unix)]
 use std::os::unix::io::{AsRawFd, IntoRawFd, RawFd};
 
-use mio::{event, Interests, Registry, Token};
+use mio::{event, Interest, Registry, Token};
 
 mod sys;
 
@@ -19,20 +19,25 @@ pub struct Sender {
 }
 
 impl event::Source for Sender {
-    fn register(&self, registry: &Registry, token: Token, interests: Interests) -> io::Result<()> {
+    fn register(
+        &mut self,
+        registry: &Registry,
+        token: Token,
+        interests: Interest,
+    ) -> io::Result<()> {
         self.inner.register(registry, token, interests)
     }
 
     fn reregister(
-        &self,
+        &mut self,
         registry: &Registry,
         token: Token,
-        interests: Interests,
+        interests: Interest,
     ) -> io::Result<()> {
         self.inner.reregister(registry, token, interests)
     }
 
-    fn deregister(&self, registry: &Registry) -> io::Result<()> {
+    fn deregister(&mut self, registry: &Registry) -> io::Result<()> {
         self.inner.deregister(registry)
     }
 }
@@ -74,20 +79,25 @@ pub struct Receiver {
 }
 
 impl event::Source for Receiver {
-    fn register(&self, registry: &Registry, token: Token, interests: Interests) -> io::Result<()> {
+    fn register(
+        &mut self,
+        registry: &Registry,
+        token: Token,
+        interests: Interest,
+    ) -> io::Result<()> {
         self.inner.register(registry, token, interests)
     }
 
     fn reregister(
-        &self,
+        &mut self,
         registry: &Registry,
         token: Token,
-        interests: Interests,
+        interests: Interest,
     ) -> io::Result<()> {
         self.inner.reregister(registry, token, interests)
     }
 
-    fn deregister(&self, registry: &Registry) -> io::Result<()> {
+    fn deregister(&mut self, registry: &Registry) -> io::Result<()> {
         self.inner.deregister(registry)
     }
 }
@@ -135,7 +145,7 @@ impl IntoRawFd for Receiver {
 /// ```
 /// use std::io::{self, Read, Write};
 ///
-/// use mio::{Poll, Events, Interests, Token};
+/// use mio::{Poll, Events, Interest, Token};
 /// use mio_pipe::new_pipe;
 ///
 /// // Unique tokens for the two ends of the channel.
@@ -150,8 +160,8 @@ impl IntoRawFd for Receiver {
 /// let (mut sender, mut receiver) = new_pipe()?;
 ///
 /// // Register both ends of the channel.
-/// poll.registry().register(&mut receiver, CHANNEL_RECV, Interests::READABLE)?;
-/// poll.registry().register(&mut sender, CHANNEL_SEND, Interests::WRITABLE)?;
+/// poll.registry().register(&mut receiver, CHANNEL_RECV, Interest::READABLE)?;
+/// poll.registry().register(&mut sender, CHANNEL_SEND, Interest::WRITABLE)?;
 ///
 /// const MSG: &[u8; 11] = b"Hello world";
 ///
