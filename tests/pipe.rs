@@ -49,7 +49,50 @@ fn smoke() {
 }
 
 #[test]
-fn event_when_pipe_is_dropped() {
+fn event_when_sender_is_dropped() {
+    let mut poll = Poll::new().unwrap();
+    let mut events = Events::with_capacity(8);
+
+    let (mut sender, mut receiver) = new_pipe().unwrap();
+    poll.registry()
+        .register(&mut receiver, RECEIVER, Interest::READABLE)
+        .unwrap();
+
+    let barrier = Arc::new(Barrier::new(2));
+    let thread_barrier = barrier.clone();
+
+    let handle = thread::spawn(move || {
+        sender.write(DATA1).unwrap();
+        thread_barrier.wait();
+
+        thread_barrier.wait();
+        drop(sender);
+        thread_barrier.wait();
+    });
+
+    barrier.wait(); // Wait for the write to complete.
+    expect_events(
+        &mut poll,
+        &mut events,
+        vec![ExpectEvent::new(RECEIVER, Interest::READABLE)],
+    );
+
+    barrier.wait(); // Unblock the thread.
+    barrier.wait(); // Wait until the receiving end is dropped.
+
+    poll.poll(&mut events, Some(Duration::from_secs(1)))
+        .unwrap();
+    let mut iter = events.iter();
+    let event = iter.next().unwrap();
+    assert!(event.is_readable());
+    assert!(event.is_error() || event.is_read_closed());
+    assert!(iter.next().is_none());
+
+    handle.join().unwrap();
+}
+
+#[test]
+fn event_when_receiver_is_dropped() {
     let mut poll = Poll::new().unwrap();
     let mut events = Events::with_capacity(8);
 
@@ -74,7 +117,7 @@ fn event_when_pipe_is_dropped() {
     );
 
     barrier.wait(); // Unblock the thread.
-    barrier.wait(); // Wait until the receiving end is closed.
+    barrier.wait(); // Wait until the receiving end is dropped.
 
     poll.poll(&mut events, Some(Duration::from_secs(1)))
         .unwrap();
