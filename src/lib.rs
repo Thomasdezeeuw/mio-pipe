@@ -137,6 +137,28 @@ impl IntoRawFd for Receiver {
 ///
 /// [`pipe(2)`]: https://pubs.opengroup.org/onlinepubs/9699919799/functions/pipe.html
 ///
+/// # Events
+///
+/// The [`Sender`] can be registered with [`WRITABLE`] interest to receive
+/// [writable events], the [`Receiver`] with [`READABLE`] interest. Once data is
+/// written to the `Sender` the `Receiver` will receive an [readable event].
+///
+/// In addition to those events, events will also be generated if the other side
+/// is dropped. However due to platform differences checking `is_{read,
+/// write}_closed` is not enough. To check if the `Sender` is dropped you'll
+/// need to check both [`is_error`] and [`is_read_closed`] on events for the
+/// `Receiver`, if either is true the `Sender` is dropped. On the `Sender` end
+/// check `is_error` and [`is_write_closed`], if either is true the `Receiver`
+/// was dropped. Also see the second example below.
+///
+/// [`WRITABLE`]: Interest::WRITABLE
+/// [writable events]: mio::event::Event::is_writable
+/// [`READABLE`]: Interest::READABLE
+/// [readable event]: mio::event::Event::is_readable
+/// [`is_error`]: mio::event::Event::is_error
+/// [`is_read_closed`]: mio::event::Event::is_read_closed
+/// [`is_write_closed`]: mio::event::Event::is_write_closed
+///
 /// # Deregistering
 ///
 /// Both `Sender` and `Receiver` will deregister themselves when dropped,
@@ -145,6 +167,9 @@ impl IntoRawFd for Receiver {
 /// [`dup(2)`]: https://pubs.opengroup.org/onlinepubs/9699919799/functions/dup.html
 ///
 /// # Examples
+///
+/// Simple example that writes data into the sending end and read it from the
+/// receiving end.
 ///
 /// ```
 /// use std::io::{self, Read, Write};
@@ -196,6 +221,46 @@ impl IntoRawFd for Receiver {
 ///         }
 ///     }
 /// }
+/// # }
+/// ```
+///
+/// Example that receives an event once the `Sender` is dropped.
+///
+/// ```
+/// # use std::io::{self, Read, Write};
+/// #
+/// # use mio::{Poll, Events, Interest, Token};
+/// # use mio_pipe::new_pipe;
+/// #
+/// # const PIPE_RECV: Token = Token(0);
+/// # const PIPE_SEND: Token = Token(1);
+/// #
+/// # fn main() -> io::Result<()> {
+/// // Same setup as in the example above.
+/// let mut poll = Poll::new()?;
+/// let mut events = Events::with_capacity(8);
+///
+/// let (mut sender, mut receiver) = new_pipe()?;
+///
+/// poll.registry().register(&mut receiver, PIPE_RECV, Interest::READABLE)?;
+/// poll.registry().register(&mut sender, PIPE_SEND, Interest::WRITABLE)?;
+///
+/// // Drop the sender.
+/// drop(sender);
+///
+/// poll.poll(&mut events, None)?;
+///
+/// for event in events.iter() {
+///     match event.token() {
+///         PIPE_RECV if event.is_error() || event.is_read_closed() => {
+///             // Detected that the sender was dropped.
+///             println!("Sender dropped!");
+///             return Ok(());
+///         },
+///         _ => unreachable!(),
+///     }
+/// }
+/// # unreachable!();
 /// # }
 /// ```
 pub fn new_pipe() -> io::Result<(Sender, Receiver)> {
