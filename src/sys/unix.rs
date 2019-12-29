@@ -131,14 +131,20 @@ pub fn new_pipe() -> io::Result<(Sender, Receiver)> {
     #[cfg(any(target_os = "ios", target_os = "macos", target_os = "solaris"))]
     unsafe {
         // For platforms that don't have `pipe2(2)` we need to manually set the
-        // file descriptor to be non-blocking.
+        // correct flags on the file descriptor.
         if libc::pipe(fds.as_mut_ptr()) != 0 {
             return Err(io::Error::last_os_error());
         }
 
         for fd in &fds {
-            if libc::fcntl(*fd, libc::F_SETFL, libc::O_NONBLOCK) != 0 {
-                return Err(io::Error::last_os_error());
+            if libc::fcntl(*fd, libc::F_SETFL, libc::O_NONBLOCK) != 0
+                || libc::fcntl(*fd, libc::F_SETFD, libc::FD_CLOEXEC) != 0
+            {
+                let err = io::Error::last_os_error();
+                // Don't leak file descriptors. Can't handle error though.
+                let _ = libc::close(fds[0]);
+                let _ = libc::close(fds[1]);
+                return Err(err);
             }
         }
     }
