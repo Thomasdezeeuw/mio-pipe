@@ -128,17 +128,21 @@ impl IntoRawFd for Receiver {
 
 /// Create a new non-blocking Unix pipe.
 ///
-/// This is a wrapper around Unix's `pipe(2)` system call and can be used as
+/// This is a wrapper around Unix's [`pipe(2)`] system call and can be used as
 /// inter-process or thread communication channel.
 ///
 /// This channel may be created before forking the process and then one end used
 /// in each process, e.g. the parent process has the sending end to send command
 /// to the child process.
 ///
+/// [`pipe(2)`]: https://pubs.opengroup.org/onlinepubs/9699919799/functions/pipe.html
+///
 /// # Deregistering
 ///
 /// Both `Sender` and `Receiver` will deregister themselves when dropped,
-/// **iff** the file descriptors are not duplicated (via `dup(2)`).
+/// **iff** the file descriptors are not duplicated (via [`dup(2)`]).
+///
+/// [`dup(2)`]: https://pubs.opengroup.org/onlinepubs/9699919799/functions/dup.html
 ///
 /// # Examples
 ///
@@ -149,10 +153,11 @@ impl IntoRawFd for Receiver {
 /// use mio_pipe::new_pipe;
 ///
 /// // Unique tokens for the two ends of the channel.
-/// const CHANNEL_RECV: Token = Token(0);
-/// const CHANNEL_SEND: Token = Token(1);
+/// const PIPE_RECV: Token = Token(0);
+/// const PIPE_SEND: Token = Token(1);
 ///
 /// # fn main() -> io::Result<()> {
+/// // Create our `Poll` instance and the `Events` container.
 /// let mut poll = Poll::new()?;
 /// let mut events = Events::with_capacity(8);
 ///
@@ -160,8 +165,8 @@ impl IntoRawFd for Receiver {
 /// let (mut sender, mut receiver) = new_pipe()?;
 ///
 /// // Register both ends of the channel.
-/// poll.registry().register(&mut receiver, CHANNEL_RECV, Interest::READABLE)?;
-/// poll.registry().register(&mut sender, CHANNEL_SEND, Interest::WRITABLE)?;
+/// poll.registry().register(&mut receiver, PIPE_RECV, Interest::READABLE)?;
+/// poll.registry().register(&mut sender, PIPE_SEND, Interest::WRITABLE)?;
 ///
 /// const MSG: &[u8; 11] = b"Hello world";
 ///
@@ -170,7 +175,7 @@ impl IntoRawFd for Receiver {
 ///
 ///     for event in events.iter() {
 ///         match event.token() {
-///             CHANNEL_SEND => sender.write(MSG)
+///             PIPE_SEND => sender.write(MSG)
 ///                 .and_then(|n| if n != MSG.len() {
 ///                         // We'll consider a short write an error in this
 ///                         // example. NOTE: we can't use `write_all` with
@@ -179,7 +184,7 @@ impl IntoRawFd for Receiver {
 ///                     } else {
 ///                         Ok(())
 ///                     })?,
-///             CHANNEL_RECV => {
+///             PIPE_RECV => {
 ///                 let mut buf = [0; 11];
 ///                 let n = receiver.read(&mut buf)?;
 ///                 println!("received: {:?}", &buf[0..n]);
