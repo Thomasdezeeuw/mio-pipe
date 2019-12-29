@@ -78,7 +78,7 @@ fn event_when_sender_is_dropped() {
     );
 
     barrier.wait(); // Unblock the thread.
-    barrier.wait(); // Wait until the receiving end is dropped.
+    barrier.wait(); // Wait until the sending end is dropped.
 
     poll.poll(&mut events, Some(Duration::from_secs(1)))
         .unwrap();
