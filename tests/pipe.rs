@@ -62,7 +62,8 @@ fn event_when_sender_is_dropped() {
     let thread_barrier = barrier.clone();
 
     let handle = thread::spawn(move || {
-        sender.write(DATA1).unwrap();
+        let n = sender.write(DATA1).unwrap();
+        assert_eq!(n, DATA1.len());
         thread_barrier.wait();
 
         thread_barrier.wait();
