@@ -1,6 +1,24 @@
 //! Unix pipe for use with Mio.
 //!
 //! See the [`new_pipe`] documentation.
+//!
+//! ## Supported platforms
+//!
+//! Currently supported platforms:
+//!
+//! * Android
+//! * DragonFly BSD
+//! * FreeBSD
+//! * Linux
+//! * NetBSD
+//! * OpenBSD
+//! * iOS
+//! * macOS
+//!
+//! The most notable exception in the list is Windows. If you want to contribute
+//! a port to Windows please see [issue #4].
+//!
+//! [issue #4]: https://github.com/Thomasdezeeuw/mio-pipe/issues/6
 
 use std::io::{self, IoSlice, IoSliceMut, Read, Write};
 #[cfg(unix)]
