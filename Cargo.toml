@@ -15,14 +15,10 @@ edition       = "2018"
 travis-ci = { repository = "Thomasdezeeuw/mio-pipe", branch = "master" }
 
 [dependencies]
-libc = "0.2.58"
+libc = "0.2.62"
+# Need `SourceFd` from `os-util`.
+mio  = { version = "0.7.0-alpha.1", features = ["os-util"] }
 
-[target.'cfg(unix)'.dependencies.mio]
-git = "https://github.com/tokio-rs/mio"
-# Need `SourceFd`.
-features = ["os-util"]
-
-[dev-dependencies.mio]
-git = "https://github.com/tokio-rs/mio"
-# Need `Poll`.
-features = ["os-poll"]
+[dev-dependencies]
+# Need `Poll` from `os-poll`.
+mio = { version = "0.7.0-alpha.1", features = ["os-poll"] }
