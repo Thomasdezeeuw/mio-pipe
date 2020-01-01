@@ -6,7 +6,7 @@
 [![Crates.io](https://img.shields.io/crates/v/mio-pipe.svg)](https://crates.io/crates/mio-pipe)
 [![Docs](https://docs.rs/mio-pipe/badge.svg)](https://docs.rs/mio-pipe)
 
-Crate for handling signals with [Mio].
+Crate that wraps a Unix pipe for use with [Mio].
 
 See the [API documentation] for more.
 
