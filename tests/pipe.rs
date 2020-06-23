@@ -82,13 +82,7 @@ fn event_when_sender_is_dropped() {
     barrier.wait(); // Unblock the thread.
     barrier.wait(); // Wait until the sending end is dropped.
 
-    poll.poll(&mut events, Some(Duration::from_secs(1)))
-        .unwrap();
-    let mut iter = events.iter();
-    let event = iter.next().unwrap();
-    assert!(event.is_readable());
-    assert!(event.is_error() || event.is_read_closed());
-    assert!(iter.next().is_none());
+    expect_one_closed_event(&mut poll, &mut events, RECEIVER, true);
 
     handle.join().unwrap();
 }
@@ -121,13 +115,7 @@ fn event_when_receiver_is_dropped() {
     barrier.wait(); // Unblock the thread.
     barrier.wait(); // Wait until the receiving end is dropped.
 
-    poll.poll(&mut events, Some(Duration::from_secs(1)))
-        .unwrap();
-    let mut iter = events.iter();
-    let event = iter.next().unwrap();
-    assert!(event.is_writable());
-    assert!(event.is_error() || event.is_write_closed());
-    assert!(iter.next().is_none());
+    expect_one_closed_event(&mut poll, &mut events, SENDER, false);
 
     handle.join().unwrap();
 }
@@ -172,6 +160,12 @@ fn from_child_process_io() {
     let n = receiver.read(&mut buf).unwrap();
     assert_eq!(n, DATA1.len());
     assert_eq!(&buf[..n], &*DATA1);
+
+    drop(sender);
+
+    expect_one_closed_event(&mut poll, &mut events, RECEIVER, true);
+
+    child.wait().unwrap();
 }
 
 #[test]
@@ -258,4 +252,21 @@ pub fn assert_would_block<T>(result: io::Result<T>) {
         Err(ref err) if err.kind() == io::ErrorKind::WouldBlock => {}
         Err(err) => panic!("unexpected error result: {}", err),
     }
+}
+
+/// Expected a closed event. If `read` is true is checks for `is_read_closed`,
+/// otherwise for `is_write_closed`.
+pub fn expect_one_closed_event(poll: &mut Poll, events: &mut Events, token: Token, read: bool) {
+    poll.poll(events, Some(Duration::from_secs(1))).unwrap();
+    let mut iter = events.iter();
+    let event = iter.next().unwrap();
+    assert_eq!(event.token(), token);
+    if read {
+        assert!(event.is_readable());
+        assert!(event.is_error() || event.is_read_closed());
+    } else {
+        assert!(event.is_writable());
+        assert!(event.is_error() || event.is_write_closed());
+    }
+    assert!(iter.next().is_none());
 }
