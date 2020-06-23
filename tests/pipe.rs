@@ -260,13 +260,29 @@ pub fn expect_one_closed_event(poll: &mut Poll, events: &mut Events, token: Toke
     poll.poll(events, Some(Duration::from_secs(1))).unwrap();
     let mut iter = events.iter();
     let event = iter.next().unwrap();
-    assert_eq!(event.token(), token);
+    assert_eq!(event.token(), token, "invalid token, event: {:#?}", event);
     if read {
-        assert!(event.is_readable());
-        assert!(event.is_error() || event.is_read_closed());
+        assert!(
+            event.is_readable(),
+            "expected readable, event: {:#?}",
+            event
+        );
+        assert!(
+            event.is_error() || event.is_read_closed(),
+            "expected closed or error, event: {:#?}",
+            event
+        );
     } else {
-        assert!(event.is_writable());
-        assert!(event.is_error() || event.is_write_closed());
+        assert!(
+            event.is_writable(),
+            "expected writable, event: {:#?}",
+            event
+        );
+        assert!(
+            event.is_error() || event.is_write_closed(),
+            "expected closed or error, event: {:#?}",
+            event
+        );
     }
     assert!(iter.next().is_none());
 }
