@@ -263,21 +263,11 @@ pub fn expect_one_closed_event(poll: &mut Poll, events: &mut Events, token: Toke
     assert_eq!(event.token(), token, "invalid token, event: {:#?}", event);
     if read {
         assert!(
-            event.is_readable(),
-            "expected readable, event: {:#?}",
-            event
-        );
-        assert!(
             event.is_error() || event.is_read_closed(),
             "expected closed or error, event: {:#?}",
             event
         );
     } else {
-        assert!(
-            event.is_writable(),
-            "expected writable, event: {:#?}",
-            event
-        );
         assert!(
             event.is_error() || event.is_write_closed(),
             "expected closed or error, event: {:#?}",
