@@ -22,7 +22,7 @@
 
 use std::io::{self, IoSlice, IoSliceMut, Read, Write};
 #[cfg(unix)]
-use std::os::unix::io::{AsRawFd, IntoRawFd, RawFd};
+use std::os::unix::io::{AsRawFd, FromRawFd, IntoRawFd, RawFd};
 
 use mio::{event, Interest, Registry, Token};
 
@@ -71,6 +71,15 @@ impl Write for Sender {
 
     fn flush(&mut self) -> io::Result<()> {
         self.inner.flush()
+    }
+}
+
+#[cfg(unix)]
+impl FromRawFd for Sender {
+    unsafe fn from_raw_fd(fd: RawFd) -> Sender {
+        Sender {
+            inner: sys::Sender::from_raw_fd(fd),
+        }
     }
 }
 
@@ -127,6 +136,15 @@ impl Read for Receiver {
 
     fn read_vectored(&mut self, bufs: &mut [IoSliceMut<'_>]) -> io::Result<usize> {
         self.inner.read_vectored(bufs)
+    }
+}
+
+#[cfg(unix)]
+impl FromRawFd for Receiver {
+    unsafe fn from_raw_fd(fd: RawFd) -> Receiver {
+        Receiver {
+            inner: sys::Receiver::from_raw_fd(fd),
+        }
     }
 }
 

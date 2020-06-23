@@ -48,6 +48,14 @@ impl Write for Sender {
     }
 }
 
+impl FromRawFd for Sender {
+    unsafe fn from_raw_fd(fd: RawFd) -> Sender {
+        Sender {
+            inner: File::from_raw_fd(fd),
+        }
+    }
+}
+
 impl AsRawFd for Sender {
     fn as_raw_fd(&self) -> RawFd {
         self.inner.as_raw_fd()
@@ -96,6 +104,14 @@ impl Read for Receiver {
 
     fn read_vectored(&mut self, bufs: &mut [IoSliceMut<'_>]) -> io::Result<usize> {
         self.inner.read_vectored(bufs)
+    }
+}
+
+impl FromRawFd for Receiver {
+    unsafe fn from_raw_fd(fd: RawFd) -> Receiver {
+        Receiver {
+            inner: File::from_raw_fd(fd),
+        }
     }
 }
 
