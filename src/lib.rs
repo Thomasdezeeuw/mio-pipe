@@ -23,6 +23,8 @@
 use std::io::{self, IoSlice, IoSliceMut, Read, Write};
 #[cfg(unix)]
 use std::os::unix::io::{AsRawFd, FromRawFd, IntoRawFd, RawFd};
+#[cfg(unix)]
+use std::process::{ChildStderr, ChildStdin, ChildStdout};
 
 use mio::{event, Interest, Registry, Token};
 
@@ -71,6 +73,17 @@ impl Write for Sender {
 
     fn flush(&mut self) -> io::Result<()> {
         self.inner.flush()
+    }
+}
+
+/// # Notes
+///
+/// The underlying pipe is **not** set to non-blocking.
+#[cfg(unix)]
+impl From<ChildStdin> for Sender {
+    fn from(stdin: ChildStdin) -> Sender {
+        // Safety: `ChildStdin` is guaranteed to be a valid file descriptor.
+        unsafe { Sender::from_raw_fd(stdin.into_raw_fd()) }
     }
 }
 
@@ -136,6 +149,28 @@ impl Read for Receiver {
 
     fn read_vectored(&mut self, bufs: &mut [IoSliceMut<'_>]) -> io::Result<usize> {
         self.inner.read_vectored(bufs)
+    }
+}
+
+/// # Notes
+///
+/// The underlying pipe is **not** set to non-blocking.
+#[cfg(unix)]
+impl From<ChildStdout> for Receiver {
+    fn from(stdout: ChildStdout) -> Receiver {
+        // Safety: `ChildStdout` is guaranteed to be a valid file descriptor.
+        unsafe { Receiver::from_raw_fd(stdout.into_raw_fd()) }
+    }
+}
+
+/// # Notes
+///
+/// The underlying pipe is **not** set to non-blocking.
+#[cfg(unix)]
+impl From<ChildStderr> for Receiver {
+    fn from(stderr: ChildStderr) -> Receiver {
+        // Safety: `ChildStderr` is guaranteed to be a valid file descriptor.
+        unsafe { Receiver::from_raw_fd(stderr.into_raw_fd()) }
     }
 }
 

@@ -1,4 +1,5 @@
 use std::io::{self, Read, Write};
+use std::process::{Command, Stdio};
 use std::sync::{Arc, Barrier};
 use std::thread;
 use std::time::Duration;
@@ -6,7 +7,7 @@ use std::time::Duration;
 use mio::event::Event;
 use mio::{Events, Interest, Poll, Token};
 
-use mio_pipe::new_pipe;
+use mio_pipe::{new_pipe, Receiver, Sender};
 
 const RECEIVER: Token = Token(0);
 const SENDER: Token = Token(1);
@@ -129,6 +130,48 @@ fn event_when_receiver_is_dropped() {
     assert!(iter.next().is_none());
 
     handle.join().unwrap();
+}
+
+#[test]
+fn from_child_process_io() {
+    // `cat` simply echo everything that we write via standard in.
+    let mut child = Command::new("cat")
+        .env_clear()
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .spawn()
+        .expect("failed to start `cat` command");
+
+    let mut sender = Sender::from(child.stdin.take().unwrap());
+    let mut receiver = Receiver::from(child.stdout.take().unwrap());
+
+    let mut poll = Poll::new().unwrap();
+    let mut events = Events::with_capacity(8);
+
+    poll.registry()
+        .register(&mut receiver, RECEIVER, Interest::READABLE)
+        .unwrap();
+    poll.registry()
+        .register(&mut sender, SENDER, Interest::WRITABLE)
+        .unwrap();
+
+    expect_events(
+        &mut poll,
+        &mut events,
+        vec![ExpectEvent::new(SENDER, Interest::WRITABLE)],
+    );
+    let n = sender.write(DATA1).unwrap();
+    assert_eq!(n, DATA1.len());
+
+    expect_events(
+        &mut poll,
+        &mut events,
+        vec![ExpectEvent::new(RECEIVER, Interest::READABLE)],
+    );
+    let mut buf = [0; 20];
+    let n = receiver.read(&mut buf).unwrap();
+    assert_eq!(n, DATA1.len());
+    assert_eq!(&buf[..n], &*DATA1);
 }
 
 /// An event that is expected to show up when `Poll` is polled, see
