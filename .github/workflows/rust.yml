@@ -1,0 +1,22 @@
+name: Rust
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: full
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install compiler
+      run: rustup toolchain install stable
+    - name: Rustc version
+      run: rustc -Vv
+    - name: Cargo version
+      run: cargo -V
+    - name: Run tests
+      run: cargo test --verbose
