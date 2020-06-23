@@ -174,6 +174,28 @@ fn from_child_process_io() {
     assert_eq!(&buf[..n], &*DATA1);
 }
 
+#[test]
+fn nonblocking_child_process_io() {
+    // `cat` simply echo everything that we write via standard in.
+    let mut child = Command::new("cat")
+        .env_clear()
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .spawn()
+        .expect("failed to start `cat` command");
+
+    let sender = Sender::from(child.stdin.take().unwrap());
+    let mut receiver = Receiver::from(child.stdout.take().unwrap());
+
+    receiver.set_nonblocking(true).unwrap();
+
+    let mut buf = [0; 20];
+    assert_would_block(receiver.read(&mut buf));
+
+    drop(sender);
+    child.wait().unwrap();
+}
+
 /// An event that is expected to show up when `Poll` is polled, see
 /// `expect_events`.
 #[derive(Debug)]

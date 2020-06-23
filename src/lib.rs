@@ -38,6 +38,13 @@ pub struct Sender {
     inner: sys::Sender,
 }
 
+impl Sender {
+    /// Set the `Sender` into or out of non-blocking mode.
+    pub fn set_nonblocking(&self, nonblocking: bool) -> io::Result<()> {
+        self.inner.set_nonblocking(nonblocking)
+    }
+}
+
 impl event::Source for Sender {
     fn register(
         &mut self,
@@ -116,6 +123,13 @@ impl IntoRawFd for Sender {
 #[derive(Debug)]
 pub struct Receiver {
     inner: sys::Receiver,
+}
+
+impl Receiver {
+    /// Set the `Receiver` into or out of non-blocking mode.
+    pub fn set_nonblocking(&self, nonblocking: bool) -> io::Result<()> {
+        self.inner.set_nonblocking(nonblocking)
+    }
 }
 
 impl event::Source for Receiver {

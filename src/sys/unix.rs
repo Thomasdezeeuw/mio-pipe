@@ -10,6 +10,12 @@ pub struct Sender {
     inner: File,
 }
 
+impl Sender {
+    pub(crate) fn set_nonblocking(&self, nonblocking: bool) -> io::Result<()> {
+        set_nonblocking(self.inner.as_raw_fd(), nonblocking)
+    }
+}
+
 impl event::Source for Sender {
     fn register(
         &mut self,
@@ -73,6 +79,12 @@ pub struct Receiver {
     inner: File,
 }
 
+impl Receiver {
+    pub(crate) fn set_nonblocking(&self, nonblocking: bool) -> io::Result<()> {
+        set_nonblocking(self.inner.as_raw_fd(), nonblocking)
+    }
+}
+
 impl event::Source for Receiver {
     fn register(
         &mut self,
@@ -124,6 +136,15 @@ impl AsRawFd for Receiver {
 impl IntoRawFd for Receiver {
     fn into_raw_fd(self) -> RawFd {
         self.inner.into_raw_fd()
+    }
+}
+
+fn set_nonblocking(fd: RawFd, nonblocking: bool) -> io::Result<()> {
+    let value = nonblocking as libc::c_int;
+    if unsafe { libc::ioctl(fd, libc::FIONBIO, &value) } == -1 {
+        return Err(io::Error::last_os_error());
+    } else {
+        Ok(())
     }
 }
 
