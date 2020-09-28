@@ -229,18 +229,15 @@ impl IntoRawFd for Receiver {
 /// written to the `Sender` the `Receiver` will receive an [readable event].
 ///
 /// In addition to those events, events will also be generated if the other side
-/// is dropped. However due to platform differences checking `is_{read,
-/// write}_closed` is not enough. To check if the `Sender` is dropped you'll
-/// need to check both [`is_error`] and [`is_read_closed`] on events for the
-/// `Receiver`, if either is true the `Sender` is dropped. On the `Sender` end
-/// check `is_error` and [`is_write_closed`], if either is true the `Receiver`
-/// was dropped. Also see the second example below.
+/// is dropped. To check if the `Sender` is dropped you'll need to check
+/// [`is_read_closed`] on events for the `Receiver`, if it returns true the
+/// `Sender` is dropped. On the `Sender` end check [`is_write_closed`], if it
+/// returns true the `Receiver` was dropped. Also see the second example below.
 ///
 /// [`WRITABLE`]: Interest::WRITABLE
 /// [writable events]: mio::event::Event::is_writable
 /// [`READABLE`]: Interest::READABLE
 /// [readable event]: mio::event::Event::is_readable
-/// [`is_error`]: mio::event::Event::is_error
 /// [`is_read_closed`]: mio::event::Event::is_read_closed
 /// [`is_write_closed`]: mio::event::Event::is_write_closed
 ///
@@ -337,7 +334,7 @@ impl IntoRawFd for Receiver {
 ///
 /// for event in events.iter() {
 ///     match event.token() {
-///         PIPE_RECV if event.is_error() || event.is_read_closed() => {
+///         PIPE_RECV if event.is_read_closed() => {
 ///             // Detected that the sender was dropped.
 ///             println!("Sender dropped!");
 ///             return Ok(());
