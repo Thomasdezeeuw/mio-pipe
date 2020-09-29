@@ -16,9 +16,9 @@
 //! * macOS
 //!
 //! The most notable exception in the list is Windows. If you want to contribute
-//! a port to Windows please see [issue #4].
+//! a port to Windows please see [issue #6].
 //!
-//! [issue #4]: https://github.com/Thomasdezeeuw/mio-pipe/issues/6
+//! [issue #6]: https://github.com/Thomasdezeeuw/mio-pipe/issues/6
 
 use std::io::{self, IoSlice, IoSliceMut, Read, Write};
 #[cfg(unix)]

@@ -1,4 +1,4 @@
-# Mio signals
+# Mio pipe
 
 [![Build Status](https://travis-ci.com/Thomasdezeeuw/mio-pipe.svg?branch=master)](https://travis-ci.com/Thomasdezeeuw/mio-pipe)
 [![Build status](https://api.cirrus-ci.com/github/Thomasdezeeuw/mio-pipe.svg)](https://cirrus-ci.com/github/Thomasdezeeuw/mio-pipe)
