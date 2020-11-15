@@ -13,6 +13,12 @@ See the [API documentation] for more.
 [Mio]: https://crates.io/crates/mio
 [API documentation]: https://docs.rs/mio-pipe
 
+## Deprecation notice
+
+Since version 0.7.5 Mio has support for the `pipe(2)` system call in the crate
+(based on this implementation):
+https://docs.rs/mio/0.7.5/mio/unix/pipe/index.html.
+
 
 ## Supported platforms
 
